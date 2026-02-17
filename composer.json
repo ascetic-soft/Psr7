@@ -1,0 +1,45 @@
+{
+    "name": "ascetic-soft/psr7",
+    "description": "A lightweight, performance-optimized PSR-7 and PSR-17 implementation for PHP 8.4+",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "psr-7",
+        "psr-17",
+        "http",
+        "message",
+        "request",
+        "response",
+        "stream",
+        "uri"
+    ],
+    "require": {
+        "php": ">=8.4",
+        "psr/http-message": "^2.0",
+        "psr/http-factory": "^1.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.94",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0"
+    },
+    "provide": {
+        "psr/http-message-implementation": "2.0",
+        "psr/http-factory-implementation": "1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "AsceticSoft\\Psr7\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AsceticSoft\\Psr7\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
