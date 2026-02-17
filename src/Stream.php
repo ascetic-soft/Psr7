@@ -20,14 +20,14 @@ final class Stream implements StreamInterface
     private bool $writable;
 
     /** @var array<string, bool> */
-    private const READABLE_MODES = [
+    private const array READABLE_MODES = [
         'r' => true, 'r+' => true, 'w+' => true, 'a+' => true, 'x+' => true, 'c+' => true,
         'rb' => true, 'r+b' => true, 'w+b' => true, 'a+b' => true, 'x+b' => true, 'c+b' => true,
         'rt' => true, 'r+t' => true, 'w+t' => true, 'a+t' => true, 'x+t' => true, 'c+t' => true,
     ];
 
     /** @var array<string, bool> */
-    private const WRITABLE_MODES = [
+    private const array WRITABLE_MODES = [
         'w' => true, 'w+' => true, 'r+' => true, 'a' => true, 'a+' => true, 'x' => true, 'x+' => true, 'c' => true, 'c+' => true,
         'wb' => true, 'w+b' => true, 'r+b' => true, 'ab' => true, 'a+b' => true, 'xb' => true, 'x+b' => true, 'cb' => true, 'c+b' => true,
         'wt' => true, 'w+t' => true, 'r+t' => true, 'at' => true, 'a+t' => true, 'xt' => true, 'x+t' => true, 'ct' => true, 'c+t' => true,
@@ -56,7 +56,7 @@ final class Stream implements StreamInterface
      */
     public static function create(string $content = ''): self
     {
-        $resource = fopen('php://temp', 'r+');
+        $resource = fopen('php://temp', 'rb+');
 
         if ($resource === false) {
             throw new \RuntimeException('Unable to create stream');

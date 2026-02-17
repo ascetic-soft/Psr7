@@ -147,7 +147,6 @@ trait MessageTrait
     private function setHeaders(array $headers): void
     {
         foreach ($headers as $name => $value) {
-            $name = (string) $name;
             $values = self::normalizeHeaderValue($value);
             $lower = strtolower($name);
 

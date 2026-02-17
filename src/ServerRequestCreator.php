@@ -42,76 +42,99 @@ final class ServerRequestCreator
         $headers = self::extractHeaders($server);
         $protocol = self::extractProtocol($server);
 
-        $resource = fopen('php://input', 'r');
+        $resource = fopen('php://input', 'rb');
         if ($resource === false) {
             throw new \RuntimeException('Unable to open php://input');
         }
         $body = new Stream($resource);
 
-        $request = new ServerRequest($method, $uri, $headers, $body, $protocol, $server);
-        $request = $request
-            ->withCookieParams($cookies)
-            ->withQueryParams($get)
-            ->withUploadedFiles(self::normalizeFiles($files));
-
+        $parsedBody = null;
         if ($method === 'POST') {
-            $contentType = $request->getHeaderLine('content-type');
+            $contentType = '';
+            foreach ($headers as $name => $value) {
+                if (strtolower($name) === 'content-type') {
+                    $contentType = $value;
+                    break;
+                }
+            }
 
             if (str_contains($contentType, 'application/x-www-form-urlencoded')
                 || str_contains($contentType, 'multipart/form-data')) {
-                $request = $request->withParsedBody($post);
+                $parsedBody = $post;
             }
         }
 
-        return $request;
+        return new ServerRequest(
+            $method,
+            $uri,
+            $headers,
+            $body,
+            $protocol,
+            $server,
+            cookieParams: $cookies,
+            queryParams: $get,
+            uploadedFiles: self::normalizeFiles($files),
+            parsedBody: $parsedBody,
+        );
     }
 
     /**
+     * Build a URI directly from $_SERVER variables (0 clones).
+     *
      * @param array<string, mixed> $server
      */
     private static function createUriFromServer(array $server): Uri
     {
-        $uri = new Uri();
-
-        // Scheme.
         $https = $server['HTTPS'] ?? '';
         $scheme = (\is_string($https) && $https !== '' && $https !== 'off') ? 'https' : 'http';
-        $uri = $uri->withScheme($scheme);
 
-        // Host and port.
+        $host = '';
+        $port = '';
+
         if (isset($server['HTTP_HOST']) && \is_string($server['HTTP_HOST'])) {
-            $host = $server['HTTP_HOST'];
-            if (str_contains($host, ':')) {
-                [$host, $port] = explode(':', $host, 2);
-                $uri = $uri->withPort((int) $port);
+            $hostHeader = $server['HTTP_HOST'];
+            if (str_contains($hostHeader, ':')) {
+                [$host, $port] = explode(':', $hostHeader, 2);
+            } else {
+                $host = $hostHeader;
             }
-            $uri = $uri->withHost($host);
         } elseif (isset($server['SERVER_NAME']) && \is_string($server['SERVER_NAME'])) {
-            $uri = $uri->withHost($server['SERVER_NAME']);
+            $host = $server['SERVER_NAME'];
             if (isset($server['SERVER_PORT']) && is_numeric($server['SERVER_PORT'])) {
-                $uri = $uri->withPort((int) $server['SERVER_PORT']);
+                $port = (string) $server['SERVER_PORT'];
             }
         }
 
-        // Path.
         $requestUri = isset($server['REQUEST_URI']) && \is_string($server['REQUEST_URI'])
             ? $server['REQUEST_URI']
             : '/';
 
         $path = parse_url($requestUri, PHP_URL_PATH);
-        $uri = $uri->withPath(\is_string($path) ? $path : '/');
+        $path = \is_string($path) ? $path : '/';
 
-        // Query.
+        $query = '';
         if (isset($server['QUERY_STRING']) && \is_string($server['QUERY_STRING'])) {
-            $uri = $uri->withQuery($server['QUERY_STRING']);
+            $query = $server['QUERY_STRING'];
         } else {
-            $query = parse_url($requestUri, PHP_URL_QUERY);
-            if (\is_string($query)) {
-                $uri = $uri->withQuery($query);
+            $q = parse_url($requestUri, PHP_URL_QUERY);
+            if (\is_string($q)) {
+                $query = $q;
             }
         }
 
-        return $uri;
+        $uri = '';
+        if ($host !== '') {
+            $uri = $scheme . '://' . $host;
+            if ($port !== '') {
+                $uri .= ':' . $port;
+            }
+        }
+        $uri .= $path;
+        if ($query !== '') {
+            $uri .= '?' . $query;
+        }
+
+        return new Uri($uri);
     }
 
     /**
@@ -130,7 +153,7 @@ final class ServerRequestCreator
             }
 
             if (str_starts_with($key, 'HTTP_')) {
-                $name = str_replace('_', '-', substr($key, 5));
+                $name = strtr(substr($key, 5), '_', '-');
                 $headers[$name] = $value;
             } elseif ($key === 'CONTENT_TYPE') {
                 $headers['Content-Type'] = $value;

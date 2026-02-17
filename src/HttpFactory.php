@@ -46,7 +46,7 @@ final class HttpFactory implements
         return Stream::create($content);
     }
 
-    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
+    public function createStreamFromFile(string $filename, string $mode = 'rb'): StreamInterface
     {
         $resource = @fopen($filename, $mode);
 

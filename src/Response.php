@@ -12,7 +12,7 @@ final class Response implements ResponseInterface
     use MessageTrait;
 
     /** @var array<int, string> RFC 7231 + IANA recommended reason phrases. */
-    private const PHRASES = [
+    private const array PHRASES = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         102 => 'Processing',
@@ -113,9 +113,15 @@ final class Response implements ResponseInterface
             throw new \InvalidArgumentException(\sprintf('Invalid HTTP status code: %d', $code));
         }
 
+        $newReason = $reasonPhrase !== '' ? $reasonPhrase : (self::PHRASES[$code] ?? '');
+
+        if ($code === $this->statusCode && $newReason === $this->reasonPhrase) {
+            return $this;
+        }
+
         $new = clone $this;
         $new->statusCode = $code;
-        $new->reasonPhrase = $reasonPhrase !== '' ? $reasonPhrase : (self::PHRASES[$code] ?? '');
+        $new->reasonPhrase = $newReason;
 
         return $new;
     }

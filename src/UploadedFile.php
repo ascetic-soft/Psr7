@@ -58,7 +58,7 @@ final class UploadedFile implements UploadedFileInterface
         }
 
         if ($this->file !== null) {
-            $resource = fopen($this->file, 'r');
+            $resource = fopen($this->file, 'rb');
 
             if ($resource === false) {
                 throw new \RuntimeException(\sprintf('Unable to open file "%s"', $this->file));
@@ -84,7 +84,7 @@ final class UploadedFile implements UploadedFileInterface
                 : move_uploaded_file($this->file, $targetPath);
         } else {
             $stream = $this->getStream();
-            $target = fopen($targetPath, 'w');
+            $target = fopen($targetPath, 'wb');
 
             if ($target === false) {
                 throw new \RuntimeException(\sprintf('Unable to open target path "%s"', $targetPath));

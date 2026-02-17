@@ -8,7 +8,7 @@ use Psr\Http\Message\UriInterface;
 
 final class Uri implements UriInterface
 {
-    private const DEFAULT_PORTS = [
+    private const array DEFAULT_PORTS = [
         'http' => 80,
         'https' => 443,
     ];
@@ -45,17 +45,13 @@ final class Uri implements UriInterface
 
     public function __toString(): string
     {
-        if ($this->composedUri !== null) {
-            return $this->composedUri;
-        }
-
-        return $this->composedUri = self::composeUri(
+        return $this->composedUri ?? ($this->composedUri = self::composeUri(
             $this->scheme,
             $this->getAuthority(),
             $this->path,
             $this->query,
             $this->fragment,
-        );
+        ));
     }
 
     public function getScheme(): string
@@ -292,7 +288,7 @@ final class Uri implements UriInterface
     private static function encodePath(string $path): string
     {
         return preg_replace_callback(
-            '/(?:[^a-zA-Z0-9_\-.~!$&\'()*+,;=:@\/%]++|%(?![A-Fa-f0-9]{2}))/',
+            '/[^a-zA-Z0-9_\-.~!$&\'()*+,;=:@\/%]++|%(?![A-Fa-f0-9]{2})/',
             static fn (array $match): string => rawurlencode($match[0]),
             $path,
         ) ?? $path;
@@ -301,7 +297,7 @@ final class Uri implements UriInterface
     private static function encodeQueryOrFragment(string $str): string
     {
         return preg_replace_callback(
-            '/(?:[^a-zA-Z0-9_\-.~!$&\'()*+,;=:@\/?%]++|%(?![A-Fa-f0-9]{2}))/',
+            '/[^a-zA-Z0-9_\-.~!$&\'()*+,;=:@\/?%]++|%(?![A-Fa-f0-9]{2})/',
             static fn (array $match): string => rawurlencode($match[0]),
             $str,
         ) ?? $str;

@@ -6,6 +6,7 @@ namespace AsceticSoft\Psr7;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\UriInterface;
 
 final class ServerRequest extends Request implements ServerRequestInterface
@@ -13,24 +14,28 @@ final class ServerRequest extends Request implements ServerRequestInterface
     /** @var array<string, mixed> */
     private array $serverParams;
 
-    /** @var array<mixed> */
-    private array $cookieParams = [];
+    /** @var array<string, mixed> */
+    private array $cookieParams;
 
     /** @var array<string, mixed> */
-    private array $queryParams = [];
+    private array $queryParams;
 
-    /** @var array<mixed> */
-    private array $uploadedFiles = [];
+    /** @var array<string, mixed> */
+    private array $uploadedFiles;
 
-    /** @var null|array<mixed>|object */
-    private null|array|object $parsedBody = null;
+    /** @var null|array<string, mixed>|object */
+    private null|array|object $parsedBody;
 
     /** @var array<string, mixed> */
     private array $attributes = [];
 
     /**
-     * @param array<string, string|list<string>> $headers
-     * @param array<string, mixed>               $serverParams
+     * @param array<string, string|list<string>>              $headers
+     * @param array<string, mixed>                            $serverParams
+     * @param array<string, mixed>                            $cookieParams
+     * @param array<string, mixed>                            $queryParams
+     * @param array<string, mixed>                            $uploadedFiles
+     * @param null|array<string, mixed>|object                $parsedBody
      */
     public function __construct(
         string $method,
@@ -39,9 +44,17 @@ final class ServerRequest extends Request implements ServerRequestInterface
         ?StreamInterface $body = null,
         string $protocolVersion = '1.1',
         array $serverParams = [],
+        array $cookieParams = [],
+        array $queryParams = [],
+        array $uploadedFiles = [],
+        null|array|object $parsedBody = null,
     ) {
         parent::__construct($method, $uri, $headers, $body, $protocolVersion);
         $this->serverParams = $serverParams;
+        $this->cookieParams = $cookieParams;
+        $this->queryParams = $queryParams;
+        $this->uploadedFiles = $uploadedFiles;
+        $this->parsedBody = $parsedBody;
     }
 
     /** @return array<string, mixed> */
@@ -50,13 +63,13 @@ final class ServerRequest extends Request implements ServerRequestInterface
         return $this->serverParams;
     }
 
-    /** @return array<mixed> */
+    /** @return array<string, mixed> */
     public function getCookieParams(): array
     {
         return $this->cookieParams;
     }
 
-    /** @param array<mixed> $cookies */
+    /** @param array<string, mixed> $cookies */
     public function withCookieParams(array $cookies): ServerRequestInterface
     {
         $new = clone $this;
@@ -71,7 +84,7 @@ final class ServerRequest extends Request implements ServerRequestInterface
         return $this->queryParams;
     }
 
-    /** @param array<mixed> $query */
+    /** @param array<string, mixed> $query */
     public function withQueryParams(array $query): ServerRequestInterface
     {
         $new = clone $this;
@@ -80,13 +93,13 @@ final class ServerRequest extends Request implements ServerRequestInterface
         return $new;
     }
 
-    /** @return array<mixed> */
+    /** @return array<string, mixed> */
     public function getUploadedFiles(): array
     {
         return $this->uploadedFiles;
     }
 
-    /** @param array<mixed> $uploadedFiles */
+    /** @param array<string, mixed> $uploadedFiles */
     public function withUploadedFiles(array $uploadedFiles): ServerRequestInterface
     {
         $new = clone $this;
@@ -95,13 +108,13 @@ final class ServerRequest extends Request implements ServerRequestInterface
         return $new;
     }
 
-    /** @return null|array<mixed>|object */
+    /** @return null|array<string, mixed>|object */
     public function getParsedBody(): null|array|object
     {
         return $this->parsedBody;
     }
 
-    /** @param null|array<mixed>|object $data */
+    /** @param null|array<string, mixed>|object $data */
     public function withParsedBody(mixed $data): ServerRequestInterface
     {
         if ($data !== null && !\is_array($data) && !\is_object($data)) { // @phpstan-ignore booleanAnd.alwaysFalse, function.alreadyNarrowedType
@@ -133,6 +146,28 @@ final class ServerRequest extends Request implements ServerRequestInterface
     {
         $new = clone $this;
         $new->attributes[$name] = $value;
+
+        return $new;
+    }
+
+    /**
+     * Return an instance with the specified attributes replaced (batch).
+     *
+     * This is an extension method (not part of PSR-7) that avoids
+     * multiple clone operations when setting several attributes at once.
+     *
+     * @param array<string, mixed> $attributes
+     */
+    public function withAttributes(array $attributes): self
+    {
+        if ($attributes === []) {
+            return $this;
+        }
+
+        $new = clone $this;
+        foreach ($attributes as $name => $value) {
+            $new->attributes[$name] = $value;
+        }
 
         return $new;
     }

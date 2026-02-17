@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Uri` — UriInterface with lazy `__toString()` and cached composition
   - `Request` — RequestInterface with MessageTrait
   - `Response` — ResponseInterface with const reason phrase lookup
-  - `ServerRequest` — ServerRequestInterface extending Request
+  - `ServerRequest` — ServerRequestInterface with batch `withAttributes()`
   - `UploadedFile` — UploadedFileInterface with file and stream support
 - Full PSR-17 (`psr/http-factory` v1.0) implementation:
   - `HttpFactory` — all 6 factory interfaces in a single class
-- `ServerRequestCreator::fromGlobals()` for creating requests from PHP superglobals
+- `ServerRequestCreator::fromGlobals()` — zero-clone factory from PHP superglobals
 - `MessageTrait` with optimized dual-array header storage for O(1) case-insensitive lookups
-- PHPStan level 9 compliance
+- PHP 8.4+ typed constants (`const array`) in `Stream` and `Uri`
+- Binary mode (`rb`, `wb`) for all stream/file operations
+- PHPStan level 9 compliance with strict PHPDoc array types
 - Comprehensive PHPUnit test suite (141 tests, 330 assertions)
